@@ -1,34 +1,32 @@
 export default async function handler(req, res) {
-  // Cache response on Vercel Edge for 10 minutes
+  // Cache on Vercel's Edge CDN for 10 minutes
   res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate');
 
   try {
-    // 1. Fetch initial BIHAMK page
-    const pageRes = await fetch('https://bihamk.ba/spi/radari?radar=non-stationary', {
+    // 1. Fetch main page to find all current station IDs for today
+    const mainRes = await fetch('https://bihamk.ba/spi/radari?radar=non-stationary', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
     });
 
-    const html = await pageRes.text();
-    const cookie = pageRes.headers.get('set-cookie') || '';
+    if (!mainRes.ok) throw new Error('BIHAMK returned HTTP ' + mainRes.status);
+    const mainHtml = await mainRes.text();
 
-    // Extract CSRF token and Livewire component snapshot
-    const tokenMatch = html.match(/_token["\']?\s*:\s*["\']([^"\']+)["\']/i) || html.match(/name="csrf-token"\s+content="([^"]+)"/i);
-    const token = tokenMatch ? tokenMatch[1] : '';
-
-    const snapshotMatch = html.match(/wire:snapshot="([^"]+)"/i);
-    const snapshot = snapshotMatch ? snapshotMatch[1].replace(/&quot;/g, '"') : '';
-
-    // 2. Dynamically extract station cards and daily loadModal(ID) from HTML
+    // 2. Dynamically extract station cards and their daily IDs
     const cardRegex = /<article[^>]*wire:click="loadModal\((\d+)\)"[\s\S]*?<span[^>]*class="[^"]*font-medium[^"]*"[^>]*>\s*([^<]+?)\s*<\/span>/gi;
     
-    const detectedStations = [];
+    const stations = [];
+    const seenIds = new Set();
     let match;
-    while ((match = cardRegex.exec(html)) !== null) {
+
+    while ((match = cardRegex.exec(mainHtml)) !== null) {
       const id = parseInt(match[1], 10);
       const station = match[2].trim();
-      
+
+      if (seenIds.has(id)) continue;
+      seenIds.add(id);
+
       let town = station.replace(/^(PS|MUP)\s+/i, '').replace(/\s+M-\d+/i, '').trim();
       let canton = 'BIH';
       let road = 'Lokalni';
@@ -50,48 +48,43 @@ export default async function handler(req, res) {
       else if (/Srebrenik/i.test(station)) { town = 'Srebrenik'; canton = 'TK'; road = 'M-1.8'; }
       else if (/Orašje|Posav/i.test(station)) { town = 'Orašje'; canton = 'POSAVINA'; road = 'M-1.8'; }
 
-      detectedStations.push({ id, station, town, canton, road });
+      stations.push({ id, station, town, canton, road });
     }
 
-    const results = [];
+    // 3. Fetch each station modal directly via simple GET requests in parallel
+    const results = await Promise.all(
+      stations.map(async (st) => {
+        try {
+          const res = await fetch(`https://bihamk.ba/spi/radari?id=${st.id}`, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          });
 
-    // 3. Query Livewire for each detected station
-    for (const st of detectedStations) {
-      try {
-        const lwRes = await fetch('https://bihamk.ba/livewire/update', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': token,
-            'Cookie': cookie,
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          },
-          body: JSON.stringify({
-            _token: token,
-            components: [{
-              snapshot: snapshot,
-              updates: {},
-              calls: [{ path: '', method: 'loadModal', params: [st.id] }]
-            }]
-          })
-        });
+          if (!res.ok) return null;
+          const html = await res.text();
 
-        const lwData = await lwRes.json();
-        const modalHtml = lwData?.components?.[0]?.effects?.html || '';
+          // Regex to extract lines starting with time range
+          const timeRegex = /[0-2]?\d:[0-5]\d\s*(?:do|-)\s*[0-2]?\d:[0-5]\d\s*(?:sati)?[^<\n\r]+/gi;
+          const matches = html.match(timeRegex) || [];
+          const announcements = matches.map(l => l.replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim());
 
-        const lineMatches = modalHtml.match(/[0-2]?\d:[0-5]\d\s*(?:do|-)\s*[0-2]?\d:[0-5]\d\s*(?:sati)?[^<]+/gi) || [];
-        const announcements = lineMatches.map(l => l.replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim());
-
-        if (announcements.length > 0) {
-          results.push({ ...st, announcements });
+          if (announcements.length > 0) {
+            return { ...st, announcements };
+          }
+          return null;
+        } catch (e) {
+          return null;
         }
-      } catch (err) {}
-    }
+      })
+    );
 
-    if (results.length > 0) {
-      return res.status(200).json(results);
+    const validResults = results.filter(Boolean);
+
+    if (validResults.length > 0) {
+      return res.status(200).json(validResults);
     } else {
-      throw new Error('No radar items parsed from Livewire');
+      throw new Error('No radar items parsed from BIHAMK');
     }
   } catch (error) {
     return res.status(500).json({ error: error.message });
