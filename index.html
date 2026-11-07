@@ -68,13 +68,6 @@
 
       <!-- Header Controls (Sync, Refresh & Theme Toggle) -->
       <div class="flex items-center gap-2">
-        <button id="btn-open-sync" class="p-2 rounded-lg border border-[#e5e7eb] dark:border-[#2b3342] bg-[#f8f9fa] dark:bg-[#1f242e] text-[#4b5563] dark:text-[#d1d5db] hover:bg-[#fed100] hover:text-[#111827] dark:hover:bg-[#fed100] dark:hover:text-[#111827] transition-all" title="API Postavke & Automatska Sinhronizacija">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        </button>
-
         <button id="btn-refresh-header" class="p-2 rounded-lg border border-[#e5e7eb] dark:border-[#2b3342] bg-[#f8f9fa] dark:bg-[#1f242e] text-[#4b5563] dark:text-[#d1d5db] hover:bg-[#fed100] hover:text-[#111827] dark:hover:bg-[#fed100] dark:hover:text-[#111827] transition-all" title="Osvježi podatke">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -206,63 +199,6 @@
     </div>
 
   </main>
-
-  <!-- Live API & Worker Sync Settings Modal -->
-  <div id="modal-sync" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3">
-    <div class="bg-white dark:bg-[#161a22] border border-[#e5e7eb] dark:border-[#29303d] rounded-xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl">
-      <div class="p-3.5 border-b border-[#e5e7eb] dark:border-[#29303d] flex items-center justify-between">
-        <h2 class="font-bold text-sm text-[#111827] dark:text-white flex items-center gap-2">
-          <svg class="w-4 h-4 text-[#111827] dark:text-[#fed100]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Automatska 24/7 Sinhronizacija
-        </h2>
-        <button id="btn-close-sync" class="p-1 text-[#6b7280] hover:text-[#111827] dark:hover:text-white rounded">✕</button>
-      </div>
-
-      <div class="p-4 overflow-y-auto space-y-3.5 text-xs text-[#374151] dark:text-[#cbd5e1] leading-relaxed custom-scroll">
-        <div class="bg-[#f8f9fa] dark:bg-[#101319] p-3 rounded-lg border border-[#e5e7eb] dark:border-[#252f44] space-y-1">
-          <p class="font-bold text-[#111827] dark:text-white text-[11px] uppercase tracking-wider">Kako radi automatsko ažuriranje?</p>
-          <p>BIHAMK-ova stranica koristi Laravel Livewire i blokira direktan pristup iz preglednika mobitela zbog <strong>CORS</strong> zaštite. Da ne bi gledao jučerašnje podatke, postavlja se besplatan <strong>Cloudflare Worker</strong> (ili Vercel funkcija) koji jednom na sat skine BIHAMK bilten, parsira ga i servira tvojoj aplikaciji.</p>
-        </div>
-
-        <div>
-          <label for="input-api-url" class="block text-[11px] font-black text-[#111827] dark:text-white mb-1 uppercase">
-            Tvoj Cloudflare Worker / Backend URL:
-          </label>
-          <div class="flex items-center gap-2">
-            <input type="url" id="input-api-url" placeholder="https://bihamk-api.mojserver.workers.dev/api/radari" class="w-full bg-[#fdfdfd] dark:bg-[#0c1017] border border-[#d1d5db] dark:border-[#252f42] rounded-lg px-2.5 py-2 text-xs font-mono text-[#111827] dark:text-white focus:outline-none focus:border-[#fed100]">
-            <button id="btn-save-api" class="px-3 py-2 rounded-lg bg-[#fed100] text-[#111827] font-black text-xs hover:bg-[#e5bc00] transition-colors flex-shrink-0 cursor-pointer">
-              Sačuvaj
-            </button>
-          </div>
-          <div class="mt-1 flex items-center justify-between">
-            <span id="sync-status-msg" class="text-[10px] text-[#6b7280] dark:text-[#9ca3af]">Status: Koristi se ugrađena baza sa današnjim terminima.</span>
-            <button id="btn-clear-api" class="text-[10px] text-[#dc2626] hover:underline">Obriši URL</button>
-          </div>
-        </div>
-
-        <div class="border-t border-[#e5e7eb] dark:border-[#252f44] pt-2">
-          <p class="font-bold text-[11px] text-[#111827] dark:text-white mb-1">Kod za Cloudflare Worker (30 linija, 100% besplatno):</p>
-          <pre class="bg-[#0f1115] p-2 rounded text-[10px] text-[#a7f3d0] font-mono overflow-x-auto whitespace-pre">export default {
-  async fetch(req) {
-    const res = await fetch("https://bihamk.ba/spi/radari?radar=non-stationary");
-    // Parsira HTML i vraća JSON
-    return new Response(JSON.stringify(radari), {
-      headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
-    });
-  }
-};</pre>
-        </div>
-      </div>
-
-      <div class="p-3 border-t border-[#e5e7eb] dark:border-[#29303d] flex justify-end">
-        <button id="btn-close-sync-footer" class="px-3.5 py-1.5 bg-[#f3f4f6] dark:bg-[#1f242e] hover:bg-[#e5e7eb] dark:hover:bg-[#283242] text-xs font-bold text-[#111827] dark:text-white rounded-lg border border-[#d1d5db] dark:border-[#2b3342] cursor-pointer">
-          Zatvori
-        </button>
-      </div>
-    </div>
-  </div>
 
   <!-- App Script -->
   <script>
@@ -706,25 +642,15 @@
       document.getElementById('current-clock').textContent = `${h}:${m}`;
     }
 
-    // Fetch Live Feed from Vercel /api/radari or custom backend
+    // Fetch Live Feed automatically from /api/radari
     async function fetchLiveFeed() {
-      let endpoint = API_URL;
       try {
-        const customUrl = localStorage.getItem('bihamk_api_url');
-        if (customUrl) endpoint = customUrl;
-      } catch (e) {}
-
-      if (!endpoint) return;
-
-      try {
-        const res = await fetch(endpoint);
+        const res = await fetch(API_URL);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           rebuildEvents(data);
           render();
-          const badge = document.getElementById('sync-status-msg');
-          if (badge) badge.textContent = 'Status: Sinhronizovano uživo sa servera.';
         }
       } catch (err) {
         console.warn('API sync fallback to seed feed:', err);
@@ -798,43 +724,6 @@
       try {
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
       } catch (err) {}
-    });
-
-    // Sync Modal Controls
-    const modalSync = document.getElementById('modal-sync');
-    const inputApiUrl = document.getElementById('input-api-url');
-
-    try {
-      inputApiUrl.value = localStorage.getItem('bihamk_api_url') || '';
-    } catch (e) {}
-
-    document.getElementById('btn-open-sync').addEventListener('click', () => {
-      modalSync.classList.remove('hidden');
-    });
-    document.getElementById('btn-close-sync').addEventListener('click', () => {
-      modalSync.classList.add('hidden');
-    });
-    document.getElementById('btn-close-sync-footer').addEventListener('click', () => {
-      modalSync.classList.add('hidden');
-    });
-
-    document.getElementById('btn-save-api').addEventListener('click', () => {
-      const url = inputApiUrl.value.trim();
-      try {
-        localStorage.setItem('bihamk_api_url', url);
-      } catch (e) {}
-      fetchLiveFeed();
-      modalSync.classList.add('hidden');
-    });
-
-    document.getElementById('btn-clear-api').addEventListener('click', () => {
-      inputApiUrl.value = '';
-      try {
-        localStorage.removeItem('bihamk_api_url');
-      } catch (e) {}
-      document.getElementById('sync-status-msg').textContent = 'Status: Koristi se ugrađena baza sa današnjim terminima.';
-      rebuildEvents(SEED_RADAR_FEED);
-      render();
     });
 
     // Header Refresh button
